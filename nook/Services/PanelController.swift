@@ -45,8 +45,8 @@ final class PanelController {
                 self?.hidePanel()
             }
         )
-        // Give SwiftUI an explicit frame so it doesn't fight over sizing
         .frame(width: panelWidth, height: panelHeight)
+        .ignoresSafeArea()
 
         if panel == nil {
             panel = FloatingPanel(
@@ -57,13 +57,13 @@ final class PanelController {
         guard let panel else { return }
 
         let hostingView = NSHostingView(rootView: content)
-        // Pin the hosting view to fill the panel's content area
         hostingView.autoresizingMask = [.width, .height]
         panel.contentView = hostingView
 
         panel.setFrame(panelRect, display: true)
         panel.alphaValue = 0
         panel.orderFrontRegardless()
+        panel.makeKey()
 
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2

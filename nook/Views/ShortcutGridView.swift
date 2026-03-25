@@ -6,16 +6,18 @@ struct ShortcutGridView: View {
     let onItemTapped: (ShortcutItem) -> Void
 
     var body: some View {
-        LazyVGrid(
-            columns: Array(
-                repeating: GridItem(.flexible(), spacing: 4),
-                count: columns
-            ),
-            spacing: 4
-        ) {
-            ForEach(items) { item in
-                ShortcutItemView(item: item) {
-                    onItemTapped(item)
+        GlassEffectContainer(spacing: 4) {
+            LazyVGrid(
+                columns: Array(
+                    repeating: GridItem(.flexible(), spacing: 4),
+                    count: columns
+                ),
+                spacing: 4
+            ) {
+                ForEach(items) { item in
+                    ShortcutItemView(item: item) {
+                        onItemTapped(item)
+                    }
                 }
             }
         }

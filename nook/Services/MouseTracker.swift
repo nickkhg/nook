@@ -11,12 +11,19 @@ final class MouseTracker {
     private var isInsidePanel = false
 
     private let notchDetector: NotchDetector
-    private var panelFrame: NSRect = .zero
     private let graceMargin: Double = 20
     private let dismissDelay: TimeInterval = 0.3
 
     init(notchDetector: NotchDetector) {
         self.notchDetector = notchDetector
+    }
+
+    /// Looks up the current panel window frame dynamically.
+    private var panelFrame: NSRect {
+        let window = NSApp.windows.first { window in
+            window is NSPanel && window.level == .floating && window.isVisible
+        }
+        return window?.frame ?? .zero
     }
 
     func start() {
@@ -44,10 +51,6 @@ final class MouseTracker {
         globalMonitor = nil
         localMonitor = nil
         dismissTimer?.invalidate()
-    }
-
-    func updatePanelFrame(_ frame: NSRect) {
-        self.panelFrame = frame
     }
 
     private func handleMouseMoved() {
