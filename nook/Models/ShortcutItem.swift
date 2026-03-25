@@ -1,10 +1,29 @@
 import Foundation
 
 struct ShortcutItem: Codable, Identifiable, Hashable, Sendable {
-    let id: UUID
+    var id: UUID
     var label: String
     var type: ShortcutType
     var iconOverride: String?
+
+    init(id: UUID = UUID(), label: String, type: ShortcutType, iconOverride: String? = nil) {
+        self.id = id
+        self.label = label
+        self.type = type
+        self.iconOverride = iconOverride
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        self.label = try container.decode(String.self, forKey: .label)
+        self.type = try container.decode(ShortcutType.self, forKey: .type)
+        self.iconOverride = try container.decodeIfPresent(String.self, forKey: .iconOverride)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, label, type, iconOverride
+    }
 
     enum ShortcutType: Codable, Hashable {
         case app(bundleIdentifier: String)

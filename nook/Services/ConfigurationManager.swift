@@ -24,6 +24,8 @@ final class ConfigurationManager {
         if let data = try? Data(contentsOf: configURL),
            let config = try? JSONDecoder().decode(NookConfiguration.self, from: data) {
             self.configuration = config
+            // Save back to persist any auto-generated UUIDs
+            saveIfNeeded(originalData: data)
         } else {
             self.configuration = .default
             try? FileManager.default.createDirectory(at: nookDir, withIntermediateDirectories: true)
@@ -44,6 +46,18 @@ final class ConfigurationManager {
         guard let data = try? Data(contentsOf: configURL),
               let config = try? JSONDecoder().decode(NookConfiguration.self, from: data) else { return }
         self.configuration = config
+        saveIfNeeded(originalData: data)
+    }
+
+    /// Re-encodes and saves only if the loaded data differs from what we'd write
+    /// (e.g. UUIDs were auto-generated for items that had none).
+    private func saveIfNeeded(originalData: Data) {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let newData = try? encoder.encode(configuration) else { return }
+        if newData != originalData {
+            try? newData.write(to: configURL, options: .atomic)
+        }
     }
 
     var configFilePath: String {

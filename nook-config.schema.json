@@ -44,7 +44,7 @@
   "$defs": {
     "shortcutItem": {
       "type": "object",
-      "required": ["id", "label", "type"],
+      "required": ["label", "type"],
       "properties": {
         "id": {
           "type": "string",
