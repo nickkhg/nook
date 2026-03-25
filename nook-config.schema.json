@@ -6,6 +6,11 @@
   "type": "object",
   "required": ["items"],
   "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "JSON Schema reference for IDE validation."
+    },
     "columns": {
       "type": "integer",
       "minimum": 1,
