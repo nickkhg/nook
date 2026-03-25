@@ -1,10 +1,16 @@
 import Foundation
 
 struct NookConfiguration: Codable, Sendable {
+    var schema: String = "https://github.com/nickkhg/nook/raw/main/nook-config.schema.json"
     var items: [ShortcutItem]
     var columns: Int
     var triggerHeight: Double
     var panelWidth: Double
+
+    enum CodingKeys: String, CodingKey {
+        case schema = "$schema"
+        case items, columns, triggerHeight, panelWidth
+    }
 
     static let `default` = NookConfiguration(
         items: [
