@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/nickkhg/nook/raw/main/nook-config.schema.json",
+  "title": "Nook Configuration",
+  "description": "Configuration file for Nook, a macOS notch launcher app.",
+  "type": "object",
+  "required": ["items"],
+  "properties": {
+    "columns": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8,
+      "default": 4,
+      "description": "Number of columns in the shortcut grid."
+    },
+    "triggerHeight": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 5,
+      "description": "Height in points of the mouse trigger zone at the top of the screen."
+    },
+    "panelWidth": {
+      "type": "number",
+      "minimum": 200,
+      "maximum": 800,
+      "default": 340,
+      "description": "Width of the panel in points."
+    },
+    "items": {
+      "type": "array",
+      "description": "List of shortcut items to display in the panel.",
+      "items": {
+        "$ref": "#/$defs/shortcutItem"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "shortcutItem": {
+      "type": "object",
+      "required": ["id", "label", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier (UUID) for this shortcut."
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label shown below the icon."
+        },
+        "iconOverride": {
+          "type": "string",
+          "description": "Optional SF Symbol name to use instead of the auto-detected icon."
+        },
+        "type": {
+          "oneOf": [
+            { "$ref": "#/$defs/appType" },
+            { "$ref": "#/$defs/urlType" },
+            { "$ref": "#/$defs/fileType" },
+            { "$ref": "#/$defs/shellScriptType" },
+            { "$ref": "#/$defs/shortcutsAppType" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "appType": {
+      "type": "object",
+      "required": ["kind", "bundleIdentifier"],
+      "properties": {
+        "kind": {
+          "const": "app"
+        },
+        "bundleIdentifier": {
+          "type": "string",
+          "description": "The macOS bundle identifier of the app (e.g. \"com.apple.Safari\")."
+        }
+      },
+      "additionalProperties": false
+    },
+    "urlType": {
+      "type": "object",
+      "required": ["kind", "urlString"],
+      "properties": {
+        "kind": {
+          "const": "url"
+        },
+        "urlString": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL to open in the default browser."
+        }
+      },
+      "additionalProperties": false
+    },
+    "fileType": {
+      "type": "object",
+      "required": ["kind", "path"],
+      "properties": {
+        "kind": {
+          "const": "file"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to a file or folder. Supports ~ for home directory."
+        }
+      },
+      "additionalProperties": false
+    },
+    "shellScriptType": {
+      "type": "object",
+      "required": ["kind", "path"],
+      "properties": {
+        "kind": {
+          "const": "shellScript"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to the shell script. Supports ~ for home directory."
+        },
+        "arguments": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional arguments to pass to the script."
+        },
+        "runAsTask": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, the script runs as a tracked background task. Tapping the tile toggles the process on/off."
+        }
+      },
+      "additionalProperties": false
+    },
+    "shortcutsAppType": {
+      "type": "object",
+      "required": ["kind", "shortcutName"],
+      "properties": {
+        "kind": {
+          "const": "shortcutsApp"
+        },
+        "shortcutName": {
+          "type": "string",
+          "description": "The name of the Shortcuts.app shortcut to run."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
