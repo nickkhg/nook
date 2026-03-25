@@ -106,6 +106,10 @@ struct PanelHostView: View {
                     configuration: configManager.configuration,
                     onItemTapped: { item in
                         ShortcutLauncher.launch(item)
+                        // Don't dismiss the panel for task-mode scripts
+                        if case .shellScript(_, _, let runAsTask) = item.type, runAsTask == true {
+                            return
+                        }
                         panelController.hidePanel()
                     }
                 )

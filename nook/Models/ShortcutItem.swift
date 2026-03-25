@@ -10,7 +10,7 @@ struct ShortcutItem: Codable, Identifiable, Hashable, Sendable {
         case app(bundleIdentifier: String)
         case url(urlString: String)
         case file(path: String)
-        case shellScript(path: String, arguments: [String]?)
+        case shellScript(path: String, arguments: [String]?, runAsTask: Bool?)
         case shortcutsApp(shortcutName: String)
 
         private enum CodingKeys: String, CodingKey {
@@ -19,6 +19,7 @@ struct ShortcutItem: Codable, Identifiable, Hashable, Sendable {
             case urlString
             case path
             case arguments
+            case runAsTask
             case shortcutName
         }
 
@@ -39,7 +40,8 @@ struct ShortcutItem: Codable, Identifiable, Hashable, Sendable {
             case "shellScript":
                 let path = try container.decode(String.self, forKey: .path)
                 let args = try container.decodeIfPresent([String].self, forKey: .arguments)
-                self = .shellScript(path: path, arguments: args)
+                let task = try container.decodeIfPresent(Bool.self, forKey: .runAsTask)
+                self = .shellScript(path: path, arguments: args, runAsTask: task)
             case "shortcutsApp":
                 let name = try container.decode(String.self, forKey: .shortcutName)
                 self = .shortcutsApp(shortcutName: name)
@@ -64,10 +66,11 @@ struct ShortcutItem: Codable, Identifiable, Hashable, Sendable {
             case .file(let path):
                 try container.encode("file", forKey: .kind)
                 try container.encode(path, forKey: .path)
-            case .shellScript(let path, let arguments):
+            case .shellScript(let path, let arguments, let runAsTask):
                 try container.encode("shellScript", forKey: .kind)
                 try container.encode(path, forKey: .path)
                 try container.encodeIfPresent(arguments, forKey: .arguments)
+                try container.encodeIfPresent(runAsTask, forKey: .runAsTask)
             case .shortcutsApp(let shortcutName):
                 try container.encode("shortcutsApp", forKey: .kind)
                 try container.encode(shortcutName, forKey: .shortcutName)

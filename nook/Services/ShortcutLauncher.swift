@@ -10,7 +10,9 @@ enum ShortcutLauncher {
             openURL(urlString)
         case .file(let path):
             openFile(path)
-        case .shellScript(let path, let arguments):
+        case .shellScript(_, _, let runAsTask) where runAsTask == true:
+            TaskManager.shared.toggleTask(for: item)
+        case .shellScript(let path, let arguments, _):
             Task { await runShellScript(path: path, arguments: arguments) }
         case .shortcutsApp(let shortcutName):
             Task { await runShortcut(name: shortcutName) }
