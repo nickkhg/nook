@@ -14,11 +14,16 @@
 		C61DC5932F742EBB00107205 /* nook */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = nook; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
+/* Begin PBXBuildFile section */
+		PKG001 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = PKG002; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		D10001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				PKG001 /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -56,6 +61,9 @@
 			);
 			dependencies = (
 			);
+			packageProductDependencies = (
+				PKG002 /* KeyboardShortcuts */,
+			);
 			fileSystemSynchronizedGroups = (
 				C61DC5932F742EBB00107205 /* nook */,
 			);
@@ -88,6 +96,9 @@
 				Base,
 			);
 			mainGroup = E10001;
+			packageReferences = (
+				PKG003 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+			);
 			productRefGroup = E10009 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -303,6 +314,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		PKG003 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		PKG002 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = PKG003 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F10004 /* Project object */;
 }
