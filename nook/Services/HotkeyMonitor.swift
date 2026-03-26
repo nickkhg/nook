@@ -34,7 +34,7 @@ final class HotkeyMonitor {
             KeyboardShortcuts.setShortcut(shortcut, for: name)
 
             let capturedItem = item
-            KeyboardShortcuts.onKeyUp(for: name) { [weak self] in
+            KeyboardShortcuts.onKeyUp(for: name) {
                 NSLog("Nook: Global shortcut fired for '%@'", capturedItem.label)
                 ShortcutLauncher.launch(capturedItem)
             }

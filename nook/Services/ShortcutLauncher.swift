@@ -17,7 +17,12 @@ enum ShortcutLauncher {
         case .shortcutsApp(let shortcutName):
             Task { await runShortcut(name: shortcutName) }
         case .terminal(let command, let directory, let app):
-            openTerminal(command: command, directory: directory, app: app)
+            // Wait for all modifier keys to be released before sending keystrokes,
+            // otherwise held modifiers (from the global shortcut) interfere with AppleScript.
+            Task {
+                await waitForModifierRelease()
+                openTerminal(command: command, directory: directory, app: app)
+            }
         }
     }
 
@@ -35,6 +40,12 @@ enum ShortcutLauncher {
             return
         }
         NSWorkspace.shared.open(url)
+    }
+
+    /// Brief delay to let modifier keys be released before sending keystrokes.
+    @concurrent
+    private nonisolated static func waitForModifierRelease() async {
+        try? await Task.sleep(for: .milliseconds(200))
     }
 
     private static func openFile(_ path: String) {
