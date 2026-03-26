@@ -14,8 +14,11 @@ struct ShortcutGridView: View {
                 ),
                 spacing: 4
             ) {
-                ForEach(items) { item in
-                    ShortcutItemView(item: item) {
+                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                    ShortcutItemView(
+                        item: item,
+                        position: index + 1
+                    ) {
                         onItemTapped(item)
                     }
                 }

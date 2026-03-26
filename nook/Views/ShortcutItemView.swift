@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ShortcutItemView: View {
     let item: ShortcutItem
+    let position: Int?  // 1-based position for number key hint (nil = no hint)
     let onTap: () -> Void
     var taskManager: TaskManager = .shared
 
@@ -29,6 +30,16 @@ struct ShortcutItemView: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 44, height: 44)
                         .clipShape(.rect(cornerRadius: 10))
+
+                    // Position number badge (1-9)
+                    if let position, position <= 9 {
+                        Text("\(position)")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .frame(width: 16, height: 16)
+                            .background(Circle().fill(.white.opacity(0.2)))
+                            .offset(x: 18, y: -18)
+                    }
 
                     // Running indicator: pulsing ring around the icon
                     if isRunning {

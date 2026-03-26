@@ -121,5 +121,26 @@ struct PanelHostView: View {
                 )
             }
         }
+        .onKeyPress(.init("1")) { launchByIndex(0) }
+        .onKeyPress(.init("2")) { launchByIndex(1) }
+        .onKeyPress(.init("3")) { launchByIndex(2) }
+        .onKeyPress(.init("4")) { launchByIndex(3) }
+        .onKeyPress(.init("5")) { launchByIndex(4) }
+        .onKeyPress(.init("6")) { launchByIndex(5) }
+        .onKeyPress(.init("7")) { launchByIndex(6) }
+        .onKeyPress(.init("8")) { launchByIndex(7) }
+        .onKeyPress(.init("9")) { launchByIndex(8) }
+    }
+
+    private func launchByIndex(_ index: Int) -> KeyPress.Result {
+        let items = configManager.configuration.items
+        guard index < items.count, panelController.showContent else { return .ignored }
+        let item = items[index]
+        ShortcutLauncher.launch(item)
+        if case .shellScript(_, _, let runAsTask) = item.type, runAsTask == true {
+            return .handled
+        }
+        panelController.hidePanel()
+        return .handled
     }
 }

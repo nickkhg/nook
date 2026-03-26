@@ -59,6 +59,11 @@
           "type": "string",
           "description": "Optional SF Symbol name to use instead of the auto-detected icon."
         },
+        "shortcut": {
+          "type": "string",
+          "description": "Global keyboard shortcut to launch this item. Format: modifier+key. Modifiers: fn, ctrl, cmd, opt, shift. Examples: fn+g, ctrl+shift+1, cmd+opt+t",
+          "examples": ["fn+g", "ctrl+1", "cmd+opt+t", "fn+b"]
+        },
         "type": {
           "oneOf": [
             { "$ref": "#/$defs/appType" },

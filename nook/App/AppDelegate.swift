@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let notchDetector: NotchDetector
     private var mouseTracker: MouseTracker?
+    private let hotkeyMonitor = HotkeyMonitor()
 
     override init() {
         let configManager = ConfigurationManager.shared
@@ -41,6 +42,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         tracker.start()
         mouseTracker = tracker
+
+        // Set up global hotkeys from config
+        let config = ConfigurationManager.shared.configuration
+        hotkeyMonitor.updateBindings(from: config.items)
+        hotkeyMonitor.start()
     }
 
     func applicationWillTerminate(_ notification: Notification) {

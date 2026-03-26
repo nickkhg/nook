@@ -5,12 +5,14 @@ struct ShortcutItem: Codable, Identifiable, Hashable, Sendable {
     var label: String
     var type: ShortcutType
     var iconOverride: String?
+    var shortcut: String?  // e.g. "fn+g", "ctrl+shift+1", "cmd+opt+t"
 
-    init(id: UUID = UUID(), label: String, type: ShortcutType, iconOverride: String? = nil) {
+    init(id: UUID = UUID(), label: String, type: ShortcutType, iconOverride: String? = nil, shortcut: String? = nil) {
         self.id = id
         self.label = label
         self.type = type
         self.iconOverride = iconOverride
+        self.shortcut = shortcut
     }
 
     init(from decoder: Decoder) throws {
@@ -19,10 +21,11 @@ struct ShortcutItem: Codable, Identifiable, Hashable, Sendable {
         self.label = try container.decode(String.self, forKey: .label)
         self.type = try container.decode(ShortcutType.self, forKey: .type)
         self.iconOverride = try container.decodeIfPresent(String.self, forKey: .iconOverride)
+        self.shortcut = try container.decodeIfPresent(String.self, forKey: .shortcut)
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, label, type, iconOverride
+        case id, label, type, iconOverride, shortcut
     }
 
     enum ShortcutType: Codable, Hashable {
