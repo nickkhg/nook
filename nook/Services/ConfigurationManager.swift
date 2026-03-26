@@ -8,6 +8,7 @@ final class ConfigurationManager {
 
     private let configURL: URL
     private var fileWatchSource: DispatchSourceFileSystemObject?
+    private var isSaving = false
 
     static let shared = ConfigurationManager()
 
@@ -24,7 +25,7 @@ final class ConfigurationManager {
         if let data = try? Data(contentsOf: configURL),
            let config = try? JSONDecoder().decode(NookConfiguration.self, from: data) {
             self.configuration = config
-            // Save back to persist any auto-generated UUIDs
+            // Save back to persist any auto-generated UUIDs (only if needed)
             saveIfNeeded(originalData: data)
         } else {
             self.configuration = .default
@@ -39,29 +40,42 @@ final class ConfigurationManager {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         guard let data = try? encoder.encode(configuration) else { return }
+        isSaving = true
         try? data.write(to: configURL, options: .atomic)
+        // Reset after a short delay to ignore the file watcher event we just caused
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.isSaving = false
+        }
     }
 
     func reload() {
+        guard !isSaving else { return }
         guard let data = try? Data(contentsOf: configURL),
               let config = try? JSONDecoder().decode(NookConfiguration.self, from: data) else { return }
         self.configuration = config
-        saveIfNeeded(originalData: data)
-    }
-
-    /// Re-encodes and saves only if the loaded data differs from what we'd write
-    /// (e.g. UUIDs were auto-generated for items that had none).
-    private func saveIfNeeded(originalData: Data) {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        guard let newData = try? encoder.encode(configuration) else { return }
-        if newData != originalData {
-            try? newData.write(to: configURL, options: .atomic)
-        }
     }
 
     var configFilePath: String {
         configURL.path
+    }
+
+    /// Only saves if the config has new auto-generated data (e.g. UUIDs).
+    /// Compares the decoded-then-re-encoded config against original to detect changes.
+    private func saveIfNeeded(originalData: Data) {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let newData = try? encoder.encode(configuration) else { return }
+        // Only save if the semantic content changed (not just formatting)
+        let originalConfig = try? JSONDecoder().decode(NookConfiguration.self, from: originalData)
+        let newConfig = try? JSONDecoder().decode(NookConfiguration.self, from: newData)
+        guard let originalConfig, let newConfig else { return }
+
+        // Compare item count and IDs to detect auto-generated UUIDs
+        let originalIDs = Set(originalConfig.items.map(\.id))
+        let newIDs = Set(newConfig.items.map(\.id))
+        if originalIDs != newIDs {
+            save()
+        }
     }
 
     private func startWatching() {
