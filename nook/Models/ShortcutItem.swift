@@ -31,6 +31,7 @@ struct ShortcutItem: Codable, Identifiable, Hashable, Sendable {
         case file(path: String)
         case shellScript(path: String, arguments: [String]?, runAsTask: Bool?)
         case shortcutsApp(shortcutName: String)
+        case terminal(command: String, directory: String?, app: String?)
 
         private enum CodingKeys: String, CodingKey {
             case kind
@@ -40,6 +41,9 @@ struct ShortcutItem: Codable, Identifiable, Hashable, Sendable {
             case arguments
             case runAsTask
             case shortcutName
+            case command
+            case directory
+            case app
         }
 
         init(from decoder: Decoder) throws {
@@ -64,6 +68,11 @@ struct ShortcutItem: Codable, Identifiable, Hashable, Sendable {
             case "shortcutsApp":
                 let name = try container.decode(String.self, forKey: .shortcutName)
                 self = .shortcutsApp(shortcutName: name)
+            case "terminal":
+                let cmd = try container.decode(String.self, forKey: .command)
+                let dir = try container.decodeIfPresent(String.self, forKey: .directory)
+                let termApp = try container.decodeIfPresent(String.self, forKey: .app)
+                self = .terminal(command: cmd, directory: dir, app: termApp)
             default:
                 throw DecodingError.dataCorruptedError(
                     forKey: .kind, in: container,
@@ -93,6 +102,11 @@ struct ShortcutItem: Codable, Identifiable, Hashable, Sendable {
             case .shortcutsApp(let shortcutName):
                 try container.encode("shortcutsApp", forKey: .kind)
                 try container.encode(shortcutName, forKey: .shortcutName)
+            case .terminal(let command, let directory, let app):
+                try container.encode("terminal", forKey: .kind)
+                try container.encode(command, forKey: .command)
+                try container.encodeIfPresent(directory, forKey: .directory)
+                try container.encodeIfPresent(app, forKey: .app)
             }
         }
     }

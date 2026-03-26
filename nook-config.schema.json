@@ -65,7 +65,8 @@
             { "$ref": "#/$defs/urlType" },
             { "$ref": "#/$defs/fileType" },
             { "$ref": "#/$defs/shellScriptType" },
-            { "$ref": "#/$defs/shortcutsAppType" }
+            { "$ref": "#/$defs/shortcutsAppType" },
+            { "$ref": "#/$defs/terminalType" }
           ]
         }
       },
@@ -148,6 +149,29 @@
         "shortcutName": {
           "type": "string",
           "description": "The name of the Shortcuts.app shortcut to run."
+        }
+      },
+      "additionalProperties": false
+    },
+    "terminalType": {
+      "type": "object",
+      "required": ["kind", "command"],
+      "properties": {
+        "kind": {
+          "const": "terminal"
+        },
+        "command": {
+          "type": "string",
+          "description": "The shell command to run in the terminal."
+        },
+        "directory": {
+          "type": "string",
+          "description": "Optional working directory. Supports ~ for home directory."
+        },
+        "app": {
+          "type": "string",
+          "description": "Terminal app to use. Supported: Terminal, iTerm2, Warp, Ghostty, Kitty, Alacritty. Defaults to Terminal.",
+          "examples": ["Terminal", "iTerm2", "Warp", "Ghostty", "Kitty", "Alacritty"]
         }
       },
       "additionalProperties": false

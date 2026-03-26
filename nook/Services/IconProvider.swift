@@ -24,6 +24,26 @@ enum IconProvider {
         case .shortcutsApp:
             return NSImage(systemSymbolName: "command.square", accessibilityDescription: "Shortcut")
                 ?? NSImage(named: NSImage.applicationIconName)!
+        case .terminal(_, _, let app):
+            // Try to show the actual terminal app's icon
+            if let app, let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: terminalBundleID(for: app)) {
+                return NSWorkspace.shared.icon(forFile: appURL.path)
+            }
+            return NSImage(systemSymbolName: "apple.terminal", accessibilityDescription: "Terminal")
+                ?? NSImage(systemSymbolName: "terminal", accessibilityDescription: "Terminal")
+                ?? NSImage(named: NSImage.applicationIconName)!
+        }
+    }
+
+    private static func terminalBundleID(for appName: String) -> String {
+        switch appName.lowercased() {
+        case "terminal", "terminal.app": return "com.apple.Terminal"
+        case "iterm", "iterm2", "iterm.app", "iterm2.app": return "com.googlecode.iterm2"
+        case "warp", "warp.app": return "dev.warp.Warp-Stable"
+        case "ghostty", "ghostty.app": return "com.mitchellh.ghostty"
+        case "kitty", "kitty.app": return "net.kovidgoyal.kitty"
+        case "alacritty", "alacritty.app": return "org.alacritty"
+        default: return appName
         }
     }
 
