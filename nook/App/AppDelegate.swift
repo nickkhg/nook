@@ -46,6 +46,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Set up global hotkeys from config
         let config = ConfigurationManager.shared.configuration
         hotkeyMonitor.updateBindings(from: config.items)
+        hotkeyMonitor.isPanelVisible = { [weak self] in
+            self?.panelController.isVisible ?? false
+        }
+        hotkeyMonitor.onPanelItemLaunched = { [weak self] item in
+            if case .shellScript(_, _, let runAsTask) = item.type, runAsTask == true {
+                return
+            }
+            self?.panelController.hidePanel()
+        }
         hotkeyMonitor.start()
     }
 

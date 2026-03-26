@@ -6,7 +6,6 @@ struct HotkeySpec: Equatable {
     let keyCode: UInt16
     let modifiers: NSEvent.ModifierFlags
 
-    /// Parse a shortcut string like "fn+g", "ctrl+shift+1", "cmd+opt+t"
     init?(from string: String) {
         let parts = string.lowercased().split(separator: "+").map(String.init)
         guard let keyPart = parts.last else { return nil }
@@ -34,7 +33,6 @@ struct HotkeySpec: Equatable {
     func matches(_ event: NSEvent) -> Bool {
         guard event.keyCode == keyCode else { return false }
 
-        // Check each modifier we care about
         let relevantMods: [(NSEvent.ModifierFlags, Bool)] = [
             (.function, modifiers.contains(.function)),
             (.control, modifiers.contains(.control)),
@@ -51,17 +49,13 @@ struct HotkeySpec: Equatable {
         return true
     }
 
-    // Map key names to macOS key codes
     private static func keyCodeForString(_ key: String) -> UInt16? {
-        // Letters
         if key.count == 1, let char = key.first, char.isLetter {
             return letterKeyCodes[char]
         }
-        // Numbers
         if key.count == 1, let char = key.first, char.isNumber {
             return numberKeyCodes[char]
         }
-        // Special keys
         return specialKeyCodes[key]
     }
 
@@ -87,15 +81,21 @@ struct HotkeySpec: Equatable {
     ]
 }
 
-/// Global keyboard monitor that watches for configured hotkeys
-/// and launches the associated shortcut items.
+/// Global keyboard monitor for configured hotkeys and panel number keys.
 @MainActor
 final class HotkeyMonitor {
     private var globalMonitor: Any?
     private var localMonitor: Any?
     private var bindings: [(spec: HotkeySpec, item: ShortcutItem)] = []
+    private var allItems: [ShortcutItem] = []
+
+    /// Set this to check if the panel is open for number key support.
+    var isPanelVisible: () -> Bool = { false }
+    /// Called when a number key launches an item from the panel.
+    var onPanelItemLaunched: ((ShortcutItem) -> Void)?
 
     func updateBindings(from items: [ShortcutItem]) {
+        allItems = items
         bindings = items.compactMap { item in
             guard let shortcutStr = item.shortcut,
                   let spec = HotkeySpec(from: shortcutStr) else { return nil }
@@ -127,12 +127,33 @@ final class HotkeyMonitor {
 
     @discardableResult
     private func handleKeyEvent(_ event: NSEvent) -> Bool {
+        // Check configured shortcuts first
         for (spec, item) in bindings {
             if spec.matches(event) {
                 ShortcutLauncher.launch(item)
                 return true
             }
         }
+
+        // Number keys 1-9 when panel is open
+        if isPanelVisible() {
+            let numberKeys: [UInt16: Int] = [
+                18: 0, 19: 1, 20: 2, 21: 3, 23: 4,
+                22: 5, 26: 6, 28: 7, 25: 8,
+            ]
+            if let index = numberKeys[event.keyCode],
+               // Make sure no modifiers are held (just bare number key)
+               !event.modifierFlags.contains(.command),
+               !event.modifierFlags.contains(.control),
+               !event.modifierFlags.contains(.option),
+               index < allItems.count {
+                let item = allItems[index]
+                ShortcutLauncher.launch(item)
+                onPanelItemLaunched?(item)
+                return true
+            }
+        }
+
         return false
     }
 }
