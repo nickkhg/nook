@@ -93,18 +93,40 @@ enum ShortcutLauncher {
             end tell
             """)
 
+        case "ghostty", "ghostty.app":
+            // Open a new tab in Ghostty and type the command.
+            // Requires Accessibility permission in System Settings.
+            runAppleScript("""
+            tell application "Ghostty"
+                activate
+            end tell
+            tell application "System Events" to tell process "Ghostty"
+                keystroke "t" using command down
+            end tell
+            delay 0.3
+            tell application "System Events" to tell process "Ghostty"
+                keystroke "\(escapeForAppleScript(fullCommand))"
+                keystroke return
+            end tell
+            """)
+
         case "warp", "warp.app":
+            // Warp doesn't have a CLI -e flag; use AppleScript to activate then type
             runAppleScript("""
             tell application "Warp"
                 activate
             end tell
             """)
-            // Warp doesn't support AppleScript commands well; use open + CLI
-            Task { await launchCLITerminal(bundleID: "dev.warp.Warp-Stable", command: fullCommand) }
+
+        case "kitty", "kitty.app":
+            Task { await launchWithCLI(executable: "/Applications/kitty.app/Contents/MacOS/kitty", args: ["/bin/zsh", "-c", fullCommand]) }
+
+        case "alacritty", "alacritty.app":
+            Task { await launchWithCLI(executable: "/Applications/Alacritty.app/Contents/MacOS/alacritty", args: ["-e", "/bin/zsh", "-c", fullCommand]) }
 
         default:
-            // Generic fallback: open the app, then use `open -a` with a temporary script
-            Task { await launchGenericTerminal(appName: terminalApp, command: fullCommand) }
+            // Generic fallback: try `open -a AppName` and use AppleScript to type the command
+            Task { await launchWithOpen(appName: terminalApp, command: fullCommand) }
         }
     }
 
@@ -116,7 +138,7 @@ enum ShortcutLauncher {
         var error: NSDictionary?
         script.executeAndReturnError(&error)
         if let error {
-            NSLog("Nook: AppleScript error: \(error)")
+            NSLog("Nook: AppleScript error: %@", error.description)
         }
     }
 
@@ -129,41 +151,46 @@ enum ShortcutLauncher {
         "'" + string.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
+    /// Launch a terminal by invoking its binary directly with arguments.
     @concurrent
-    private nonisolated static func launchCLITerminal(bundleID: String, command: String) async {
-        // Write command to a temp script and open it with the terminal
-        let tempScript = NSTemporaryDirectory() + "nook-cmd-\(UUID().uuidString).sh"
-        let scriptContent = "#!/bin/zsh\n\(command)\n"
-        try? scriptContent.write(toFile: tempScript, atomically: true, encoding: .utf8)
-        try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tempScript)
-
+    private nonisolated static func launchWithCLI(executable: String, args: [String]) async {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        process.arguments = ["-b", bundleID, tempScript]
-        try? process.run()
-        process.waitUntilExit()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = args
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
 
-        // Clean up after a delay
-        try? await Task.sleep(for: .seconds(2))
-        try? FileManager.default.removeItem(atPath: tempScript)
+        do {
+            try process.run()
+        } catch {
+            NSLog("Nook: Failed to launch terminal at \(executable): \(error.localizedDescription)")
+        }
     }
 
+    /// Fallback: open the app with `open -a`, then wait briefly and use
+    /// AppleScript System Events to type the command + press Enter.
     @concurrent
-    private nonisolated static func launchGenericTerminal(appName: String, command: String) async {
-        // Open the terminal app and execute via a temp script
-        let tempScript = NSTemporaryDirectory() + "nook-cmd-\(UUID().uuidString).sh"
-        let scriptContent = "#!/bin/zsh\n\(command)\n"
-        try? scriptContent.write(toFile: tempScript, atomically: true, encoding: .utf8)
-        try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tempScript)
+    private nonisolated static func launchWithOpen(appName: String, command: String) async {
+        let open = Process()
+        open.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        open.arguments = ["-a", appName]
+        try? open.run()
+        open.waitUntilExit()
 
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        process.arguments = ["-a", appName, tempScript]
-        try? process.run()
-        process.waitUntilExit()
+        // Give the terminal time to open and focus
+        try? await Task.sleep(for: .milliseconds(800))
 
-        try? await Task.sleep(for: .seconds(2))
-        try? FileManager.default.removeItem(atPath: tempScript)
+        let escaped = command.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let script = """
+        tell application "System Events"
+            keystroke "\(escaped)"
+            keystroke return
+        end tell
+        """
+        await MainActor.run {
+            runAppleScript(script)
+        }
     }
 
     @concurrent
