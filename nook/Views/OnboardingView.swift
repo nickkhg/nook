@@ -1,11 +1,15 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @State private var accessibilityGranted = false
-    @State private var appleEventsGranted = false
-    @State private var checkTimer: Timer?
-
     var onComplete: () -> Void
+
+    @State private var accessibilityGranted = AXIsProcessTrusted()
+    @State private var appleEventsGranted = false
+    @State private var pollTask: Task<Void, Never>?
+
+    private var allGranted: Bool {
+        accessibilityGranted && appleEventsGranted
+    }
 
     var body: some View {
         VStack(spacing: 24) {
@@ -16,6 +20,7 @@ struct OnboardingView: View {
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: 360)
 
             VStack(spacing: 16) {
@@ -24,7 +29,7 @@ struct OnboardingView: View {
                     description: "Required to open new tabs and type commands in your terminal.",
                     granted: accessibilityGranted,
                     action: {
-                        openAccessibilitySettings()
+                        openSettings("Privacy_Accessibility")
                     }
                 )
 
@@ -33,14 +38,13 @@ struct OnboardingView: View {
                     description: "Required to communicate with terminal apps via Apple Events.",
                     granted: appleEventsGranted,
                     action: {
-                        // Trigger an Apple Events prompt by attempting a harmless script
                         triggerAppleEventsPrompt()
                     }
                 )
             }
             .padding(.vertical, 8)
 
-            if accessibilityGranted && appleEventsGranted {
+            if allGranted {
                 Button("Get Started") {
                     UserDefaults.standard.set(true, forKey: "onboardingCompleted")
                     onComplete()
@@ -56,37 +60,30 @@ struct OnboardingView: View {
         }
         .padding(40)
         .frame(width: 480)
-        .onAppear { startChecking() }
-        .onDisappear { checkTimer?.invalidate() }
-    }
-
-    private func startChecking() {
-        // Check immediately
-        checkPermissions()
-
-        // Then poll every second
-        checkTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            MainActor.assumeIsolated {
-                checkPermissions()
-            }
+        .task {
+            await pollPermissions()
         }
     }
 
-    private nonisolated func checkPermissions() {
-        // Check Accessibility
-        let axGranted = AXIsProcessTrusted()
+    private func pollPermissions() async {
+        while !Task.isCancelled {
+            let ax = AXIsProcessTrusted()
+            let ae = testAppleEvents()
 
-        // Check Apple Events by attempting a harmless script
-        let aeGranted = testAppleEvents()
-
-        MainActor.assumeIsolated {
-            accessibilityGranted = axGranted
-            appleEventsGranted = aeGranted
-
-            if axGranted && aeGranted {
-                checkTimer?.invalidate()
-                checkTimer = nil
+            if ax != accessibilityGranted {
+                accessibilityGranted = ax
             }
+            if ae != appleEventsGranted {
+                appleEventsGranted = ae
+            }
+
+            if ax && ae {
+                // Bring the window to front so the user sees "Get Started"
+                NSApp.activate(ignoringOtherApps: true)
+                break
+            }
+
+            try? await Task.sleep(for: .seconds(1.5))
         }
     }
 
@@ -102,14 +99,13 @@ struct OnboardingView: View {
         return error == nil
     }
 
-    private func openAccessibilitySettings() {
+    private func openSettings(_ section: String) {
         NSWorkspace.shared.open(
-            URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+            URL(string: "x-apple.systempreferences:com.apple.preference.security?\(section)")!
         )
     }
 
     private func triggerAppleEventsPrompt() {
-        // This will trigger the "allow nook to control System Events?" dialog
         let script = NSAppleScript(source: """
         tell application "System Events"
             return name of first process whose frontmost is true
@@ -139,9 +135,10 @@ struct PermissionRow: View {
                 Text(description)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
-            Spacer()
+            Spacer(minLength: 0)
 
             if !granted {
                 Button("Enable") {

@@ -3,8 +3,6 @@ import SwiftUI
 @main
 struct NookApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "onboardingCompleted")
-
     var body: some Scene {
         MenuBarExtra("Nook", systemImage: "rectangle.topthird.inset.filled") {
             Button("Edit Configuration...") {
@@ -21,7 +19,7 @@ struct NookApp: App {
             .keyboardShortcut("r", modifiers: .command)
 
             Button("Setup Permissions...") {
-                showOnboarding = true
+                appDelegate.showOnboardingWindow()
             }
 
             Divider()
@@ -31,13 +29,5 @@ struct NookApp: App {
             }
             .keyboardShortcut("q", modifiers: .command)
         }
-
-        Window("Nook Setup", id: "onboarding") {
-            OnboardingView {
-                showOnboarding = false
-            }
-        }
-        .windowStyle(.titleBar)
-        .windowResizability(.contentSize)
     }
 }
