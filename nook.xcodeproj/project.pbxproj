@@ -6,6 +6,10 @@
 	objectVersion = 70;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		PKG001 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = PKG002 /* KeyboardShortcuts */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		C10001 /* nook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = nook.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -13,10 +17,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C61DC5932F742EBB00107205 /* nook */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = nook; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
-
-/* Begin PBXBuildFile section */
-		PKG001 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = PKG002; };
-/* End PBXBuildFile section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		D10001 /* Frameworks */ = {
@@ -61,13 +61,13 @@
 			);
 			dependencies = (
 			);
-			packageProductDependencies = (
-				PKG002 /* KeyboardShortcuts */,
-			);
 			fileSystemSynchronizedGroups = (
 				C61DC5932F742EBB00107205 /* nook */,
 			);
 			name = nook;
+			packageProductDependencies = (
+				PKG002 /* KeyboardShortcuts */,
+			);
 			productName = nook;
 			productReference = C10001 /* nook.app */;
 			productType = "com.apple.product-type.application";
